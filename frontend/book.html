@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Book Appointment | DigiHealth</title>
+  <link rel="stylesheet" href="book.css" />
+  <style>
+    .back-btn {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      background-color: #d35400;
+    }
+  </style>
+</head>
+<body>
+  <div class="booking-container">
+    <h2>Book Appointment</h2>
+    <form id="bookForm">
+      <input type="text" id="patientName" placeholder="Your Name" required />
+
+      <select id="doctorName" required>
+        <option value="">Select Doctor</option>
+        <option value="Dr. Hiral Sethiya">Dr. Hiral Sethiya</option>
+        <option value="Dr. Asha Mehta">Dr. Asha Mehta</option>
+        <option value="Dr. Rohan Desai">Dr. Rohan Desai</option>
+        <option value="Dr. Priya Kapoor">Dr. Priya Kapoor</option>
+        <option value="Dr. Arvind Nair">Dr. Arvind Nair</option>
+      </select>
+
+      <input type="date" id="date" required />
+      <input type="time" id="time" required />
+      <button type="submit">Book Now</button>
+    </form>
+
+    <!-- Back Button -->
+    <button class="back-btn" onclick="goBack()">Back</button>
+  </div>
+
+  <script>
+    function goBack() {
+      if (confirm("Are you sure you want to go back? Any unsaved data will be lost.")) {
+        window.location.href = "login.html"; // Change this to your desired back link
+      }
+    }
+
+    window.addEventListener("beforeunload", function (e) {
+      e.preventDefault();
+      e.returnValue = "Are you sure you want to leave this page? Your booking is not saved.";
+    });
+
+  const storedName = localStorage.getItem("userName");
+  if (storedName) {
+    document.getElementById("patientName").value = storedName;
+    document.getElementById("patientName").readOnly = true;
+  } else {
+    alert("⚠️ Name not found. Please login again.");
+  }
+
+
+    document.getElementById("bookForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("❗ You must be logged in to book an appointment.");
+        return;
+      }
+
+      const data = {
+        doctorName: document.getElementById("doctorName").value,
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        patientName: document.getElementById("patientName").value
+      };
+
+      try {
+        const res = await fetch("http://localhost:5000/api/appointments/book", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`❌ Booking failed: ${res.status} - ${errText}`);
+        }
+
+        const result = await res.json();
+        alert("✅ " + result.message);
+
+        // Remove confirmation after booking
+        window.removeEventListener("beforeunload", () => {});
+      } catch (err) {
+        console.error("🚨 Error booking appointment:", err.message);
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>
